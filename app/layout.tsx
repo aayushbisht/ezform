@@ -46,7 +46,7 @@ function Navbar() {
             <Link href="/signup" className=" text-gray-600 px-4 py-2 rounded-md hover:text-gray-300">
               Sign Up
             </Link>
-            <Link href="/signup" className=" text-white bg-black px-4 py-2 rounded-md hover:bg-gray-800">
+            <Link href="/builder" className=" text-white bg-black px-4 py-2 rounded-md hover:bg-gray-800">
               Create Form
             </Link>
           </div>

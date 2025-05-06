@@ -11,7 +11,7 @@ const cta = () => {
       Join thousands of users who trust EZForm for their form building needs.
     </p>
     <Link
-      href="/signup"
+      href="/builder"
       className=" text-white bg-black px-8 py-3 rounded-md hover:bg-gray-800"
     >
       Create Your First Form
