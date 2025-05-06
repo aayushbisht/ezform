@@ -3,40 +3,15 @@ import FormHeader from './ui/FormHeader';
 import BlockList from './ui/BlockList';
 import { BlockType, FormBlock } from '../../types/formTypes';
 import BlockSelector from './ui/BlockSelector';
-
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useFormContext } from '../../contexts/FormContext';
 
 const FormBuilder = () => {
-  const [blocks, setBlocks] = useState<FormBlock[]>([]);
-  const [formTitle, setFormTitle] = useState('Untitled Form');
+  const { blocks, formTitle, updateBlocks, updateFormTitle, clearForm } = useFormContext();
   const [showBlockSelector, setShowBlockSelector] = useState(false);
   const [insertIndex, setInsertIndex] = useState<number | null>(null);
-
-  // Load data from localStorage on component mount
-  useEffect(() => {
-    const savedBlocks = localStorage.getItem('formBlocks');
-    const savedTitle = localStorage.getItem('formTitle');
-    
-    if (savedBlocks) {
-      try {
-        setBlocks(JSON.parse(savedBlocks));
-      } catch (error) {
-        console.error('Failed to parse saved blocks:', error);
-      }
-    }
-    
-    if (savedTitle) {
-      setFormTitle(savedTitle);
-    }
-  }, []);
-
-  // Save data to localStorage whenever blocks or title changes
-  useEffect(() => {
-    localStorage.setItem('formBlocks', JSON.stringify(blocks));
-  }, [blocks]);
-
-  useEffect(() => {
-    localStorage.setItem('formTitle', formTitle);
-  }, [formTitle]);
+  const router = useRouter();
 
   const handleAddBlock = (type: BlockType, blockType: string) => {
     const newBlock: FormBlock = {
@@ -53,21 +28,21 @@ const FormBuilder = () => {
       const newBlocks = [...blocks];
       console.log(newBlocks);
       newBlocks.splice(insertIndex + 1, 0, newBlock);
-      setBlocks(newBlocks);
+      updateBlocks(newBlocks);
       setShowBlockSelector(false);
       setInsertIndex(null);
     } else {
-      setBlocks([...blocks, newBlock]);
+      updateBlocks([...blocks, newBlock]);
       setShowBlockSelector(false);
     }
   };
 
   const handleDeleteBlock = (id: string) => {
-    setBlocks(blocks.filter(block => block.id !== id));
+    updateBlocks(blocks.filter(block => block.id !== id));
   };
 
   const handleUpdateBlock = (id: string, updates: Partial<FormBlock>) => {
-    setBlocks(blocks.map(block => 
+    updateBlocks(blocks.map(block => 
       block.id === id ? { ...block, ...updates } : block
     ));
   };
@@ -77,7 +52,7 @@ const FormBuilder = () => {
     const newBlocks = [...blocks];
     newBlocks.splice(dragIndex, 1);
     newBlocks.splice(hoverIndex, 0, dragBlock);
-    setBlocks(newBlocks);
+    updateBlocks(newBlocks);
   };
 
   const openBlockSelector = (index: number) => {
@@ -85,48 +60,73 @@ const FormBuilder = () => {
     setShowBlockSelector(true);
   };
 
-  const clearForm = () => {
-    if (confirm('Are you sure you want to clear the form? This will delete all blocks.')) {
-      setBlocks([]);
-      localStorage.removeItem('formBlocks');
-    }
+  const goToPreview = () => {
+    router.push('/preview');
   };
 
   return (
-    <div className="max-w-3xl mx-auto bg-white rounded-lg">
-      <div className="flex justify-between items-center">
-        <FormHeader 
-          title={formTitle} 
-          onTitleChange={setFormTitle} 
-        />
-        {blocks.length > 0 && (
+    <div className="min-h-screen flex flex-col">
+      {/* Top Navigation Bar */}
+      <div className="flex items-center justify-between bg-white py-2 px-4 border-b">
+        <div className="flex items-center">
+          <Link href="/" className="text-xl font-bold">
+            EZForm
+          </Link>
+        </div>
+
+        <div className="flex items-center">
+          <button 
+            onClick={goToPreview}
+            className="px-4 py-2 text-gray-600 rounded-md hover:bg-gray-100 mr-2"
+          >
+            Preview
+          </button>
+          
           <button 
             onClick={clearForm}
-            className="mr-4 text-sm text-red-500 hover:text-red-700"
+            className="text-gray-600 hover:text-red-500 mr-4"
+            title="Clear Form"
           >
-            Clear Form
+            Clear
           </button>
-        )}
-      </div>
-      
-      {blocks.length === 0 ? (
-        <div className="flex justify-center py-12">
+          
           <button
-            onClick={() => setShowBlockSelector(true)}
-            className="flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md"
+            type="button"
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
           >
-            <span className="mr-2">+</span> Add your first block
+            Publish
           </button>
         </div>
-      ) : (
-        <BlockList
-          blocks={blocks}
-          onDelete={handleDeleteBlock}
-          onUpdate={handleUpdateBlock}
-          onMove={handleMoveBlock}
-          onAddClick={openBlockSelector}
-        />
-      )}
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 bg-gray-50 p-6">
+        <div className="max-w-3xl mx-auto bg-white rounded-lg shadow">
+          <FormHeader 
+            title={formTitle} 
+            onTitleChange={updateFormTitle} 
+          />
+          
+          {blocks.length === 0 ? (
+            <div className="flex justify-center py-12">
+              <button
+                onClick={() => setShowBlockSelector(true)}
+                className="flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md"
+              >
+                <span className="mr-2">+</span> Add your first block
+              </button>
+            </div>
+          ) : (
+            <BlockList
+              blocks={blocks}
+              onDelete={handleDeleteBlock}
+              onUpdate={handleUpdateBlock}
+              onMove={handleMoveBlock}
+              onAddClick={openBlockSelector}
+            />
+          )}
+        </div>
+      </div>
 
       {showBlockSelector && (
         <BlockSelector

@@ -16,6 +16,10 @@ const FormHeader: React.FC<FormHeaderProps> = ({ title, onTitleChange }) => {
     }
   }, [isEditing]);
 
+  useEffect(() => {
+    setInputValue(title);
+  }, [title]);
+
   const handleBlur = () => {
     setIsEditing(false);
     if (inputValue.trim()) {
@@ -32,12 +36,12 @@ const FormHeader: React.FC<FormHeaderProps> = ({ title, onTitleChange }) => {
   };
 
   return (
-    <div className="p-4">
+    <div className="p-4 border-b">
       {isEditing ? (
         <input
           ref={inputRef}
           type="text"
-          className="text-xl font-semibold w-full outline-none border-b-2 border-gray-300 focus:border-black"
+          className="text-xl font-bold w-full outline-none border-b-2 border-gray-300 focus:border-black"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onBlur={handleBlur}
@@ -45,7 +49,7 @@ const FormHeader: React.FC<FormHeaderProps> = ({ title, onTitleChange }) => {
         />
       ) : (
         <h1 
-          className="text-xl font-semibold cursor-pointer"
+          className="text-xl font-bold cursor-pointer"
           onClick={() => setIsEditing(true)}
         >
           {title}

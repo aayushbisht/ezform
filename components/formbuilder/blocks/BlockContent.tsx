@@ -1,10 +1,10 @@
 import React from 'react';
 import { FormBlock } from '../../../types/formTypes';
 import ShortAnswerBlock from './question/ShortAnswerBlock';
-// import LongAnswerBlock from './question/LongAnswerBlock';
+import LongAnswerBlock from './question/LongAnswerBlock';
 import MultipleChoiceBlock from './question/MultipleChoiceBlock';
-// import CheckboxBlock from './question/CheckboxBlock';
-// import DropdownBlock from './question/DropdownBlock';
+import CheckboxBlock from './question/CheckboxBlock';
+import DropdownBlock from './question/DropdownBlock';
 import HeadingBlock from './layout/HeadingBlock';
 import TextBlock from './layout/TextBlock';
 import ImageBlock from './embed/ImageBlock';
@@ -23,14 +23,14 @@ const BlockContent: React.FC<BlockContentProps> = ({ block, onChange }) => {
       switch (blockType) {
         case 'short_answer':
           return <ShortAnswerBlock block={block} onChange={onChange} />;
-        // case 'long_answer':
-        //   return <LongAnswerBlock block={block} onChange={onChange} />;
+        case 'long_answer':
+          return <LongAnswerBlock block={block} onChange={onChange} />;
         case 'multiple_choice':
           return <MultipleChoiceBlock block={block} onChange={onChange} />;
-        // case 'checkbox':
-        //   return <CheckboxBlock block={block} onChange={onChange} />;
-        // case 'dropdown':
-        //   return <DropdownBlock block={block} onChange={onChange} />;
+        case 'checkbox':
+          return <CheckboxBlock block={block} onChange={onChange} />;
+        case 'dropdown':
+          return <DropdownBlock block={block} onChange={onChange} />;
         default:
           return <div>Unsupported question type: {blockType}</div>;
       }
