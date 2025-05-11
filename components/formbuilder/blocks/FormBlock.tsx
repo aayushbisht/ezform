@@ -47,44 +47,46 @@ const FormBlockComponent: React.FC<FormBlockProps> = ({
   return (
     <div
       ref={blockRef}
-      className={` rounded-lg p-4 bg-white ${isDragging ? 'opacity-50' : ''}`}
+      className={`group relative rounded-lg p-4 bg-white ${isDragging ? 'opacity-50' : ''}`}
       draggable
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex">
-        <div className="mr-3 flex flex-col space-y-2 pt-1">
-          <button
-            onClick={onDelete}
-            className="text-gray-500 hover:text-red-500"
-            title="Delete block"
-          >
-            🗑️
-          </button>
-          <button
-            onClick={onAddClick}
-            className="text-gray-500 hover:text-blue-500"
-            title="Add block below"
-          >
-            ➕
-          </button>
-          <div
-            className="text-gray-500 cursor-move"
-            title="Drag to reorder"
-          >
-            ⠿
-          </div>
-        </div>
-        
-        <div className="flex-1">
-          <BlockContent
-            block={block}
-            onChange={onUpdate}
-          />
+      {/* Control buttons that appear on hover */}
+      <div className="absolute left-[-60px]  opacity-0 group-hover:opacity-100 flex  bg-white  p-1 transition-opacity z-10">
+        <button
+          onClick={onDelete}
+          className="text-gray-500 hover:text-red-500 p-1 hover:bg-gray-200 rounded-md"
+          title="Delete block"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 6h18"></path>
+            <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"></path>
+            <path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+          </svg>
+        </button>
+        <button
+          onClick={onAddClick}
+          className="text-gray-500 hover:text-blue-500 p-1 hover:bg-gray-200 rounded-md"
+          title="Add block below"
+        >
+          +
+        </button>
+        <div
+          className="text-gray-500 cursor-move p-1 hover:bg-gray-200 rounded-md"
+          title="Drag to reorder"
+        >
+          ⠿
         </div>
       </div>
+      
+      {/* Block content */}
+      <BlockContent
+        block={block}
+        onChange={onUpdate}
+      />
     </div>
   );
 };

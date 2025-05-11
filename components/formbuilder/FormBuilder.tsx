@@ -65,9 +65,9 @@ const FormBuilder = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col ">
       {/* Top Navigation Bar */}
-      <div className="flex items-center justify-between bg-white py-2 px-4 border-b">
+      <div className="flex items-center justify-between bg-white py-2 px-4 ">
         <div className="flex items-center">
           <Link href="/" className="text-xl font-bold">
             EZForm
@@ -100,18 +100,18 @@ const FormBuilder = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 bg-gray-50 p-6">
-        <div className="max-w-3xl mx-auto bg-white rounded-lg shadow">
+      <div className="flex-1  bg-white py-6 ">
+        <div className="max-w-3xl mx-auto bg-white rounded-lg ">
           <FormHeader 
             title={formTitle} 
             onTitleChange={updateFormTitle} 
           />
           
           {blocks.length === 0 ? (
-            <div className="flex justify-center py-12">
+            <div className="flex justify-center py-6 px-2">
               <button
                 onClick={() => setShowBlockSelector(true)}
-                className="flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md"
+                className="flex items-center px-4 py-2 bg-white hover:bg-gray-200 rounded-md"
               >
                 <span className="mr-2">+</span> Add your first block
               </button>

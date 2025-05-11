@@ -36,7 +36,7 @@ const FormHeader: React.FC<FormHeaderProps> = ({ title, onTitleChange }) => {
   };
 
   return (
-    <div className="p-4 border-b">
+    <div className="py-4 px-6 ">
       {isEditing ? (
         <input
           ref={inputRef}
