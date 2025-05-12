@@ -3,6 +3,7 @@ import FormHeader from './ui/FormHeader';
 import BlockList from './ui/BlockList';
 import { BlockType, FormBlock } from '../../types/formTypes';
 import BlockSelector from './ui/BlockSelector';
+import FormSidebar from './ui/FormSidebar';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useFormContext } from '../../contexts/FormContext';
@@ -15,6 +16,7 @@ const FormBuilder = () => {
   const [insertIndex, setInsertIndex] = useState<number | null>(null);
   const [savedForms, setSavedForms] = useState<any[]>([]);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [currentFormId, setCurrentFormId] = useState<string | null>(null);
   const router = useRouter();
   const { user } = useAuth();
 
@@ -42,19 +44,41 @@ const FormBuilder = () => {
       return;
     }
 
-    const { error } = await supabase.from('forms').insert({
-      user_id: user.id,
-      title: formTitle,
-      blocks: blocks,
-      created_at: new Date().toISOString(),
-    });
+    if (currentFormId) {
+      // Update existing form
+      const { error } = await supabase
+        .from('forms')
+        .update({
+          title: formTitle,
+          blocks: blocks,
+        })
+        .eq('id', currentFormId);
 
-    if (!error) {
-      fetchSavedForms();
+      if (!error) {
+        fetchSavedForms();
+      }
+    } else {
+      // Create new form
+      const { data, error } = await supabase.from('forms').insert({
+        user_id: user.id,
+        title: formTitle,
+        blocks: blocks,
+        created_at: new Date().toISOString(),
+      }).select().single();
+
+      if (!error && data) {
+        setCurrentFormId(data.id);
+        fetchSavedForms();
+      }
     }
   };
 
-  const handleAddBlock = (type: BlockType, blockType: string) => {
+  const handleAddBlock = async (type: BlockType, blockType: string) => {
+    if (!user) {
+      setShowSaveModal(true);
+      return;
+    }
+
     const newBlock: FormBlock = {
       id: `block-${Date.now()}`,
       type,
@@ -65,34 +89,122 @@ const FormBuilder = () => {
         : []
     };
 
+    let newBlocks;
     if (insertIndex !== null) {
-      const newBlocks = [...blocks];
+      newBlocks = [...blocks];
       newBlocks.splice(insertIndex + 1, 0, newBlock);
-      updateBlocks(newBlocks);
-      setShowBlockSelector(false);
-      setInsertIndex(null);
     } else {
-      updateBlocks([...blocks, newBlock]);
-      setShowBlockSelector(false);
+      newBlocks = [...blocks, newBlock];
+    }
+    
+    updateBlocks(newBlocks);
+    setShowBlockSelector(false);
+    setInsertIndex(null);
+
+    // Save to database
+    if (currentFormId) {
+      // Update existing form
+      const { error } = await supabase
+        .from('forms')
+        .update({
+          blocks: newBlocks,
+        })
+        .eq('id', currentFormId);
+
+      if (!error) {
+        fetchSavedForms();
+      }
+    } else {
+      // Create new form if it doesn't exist
+      const { data, error } = await supabase.from('forms').insert({
+        user_id: user.id,
+        title: formTitle,
+        blocks: newBlocks,
+        created_at: new Date().toISOString(),
+      }).select().single();
+
+      if (!error && data) {
+        setCurrentFormId(data.id);
+        fetchSavedForms();
+      }
     }
   };
 
-  const handleDeleteBlock = (id: string) => {
-    updateBlocks(blocks.filter(block => block.id !== id));
+  const handleDeleteBlock = async (id: string) => {
+    if (!user) {
+      setShowSaveModal(true);
+      return;
+    }
+
+    const newBlocks = blocks.filter(block => block.id !== id);
+    updateBlocks(newBlocks);
+
+    // Save to database
+    if (currentFormId) {
+      const { error } = await supabase
+        .from('forms')
+        .update({
+          blocks: newBlocks,
+        })
+        .eq('id', currentFormId);
+
+      if (!error) {
+        fetchSavedForms();
+      }
+    }
   };
 
-  const handleUpdateBlock = (id: string, updates: Partial<FormBlock>) => {
-    updateBlocks(blocks.map(block => 
+  const handleUpdateBlock = async (id: string, updates: Partial<FormBlock>) => {
+    if (!user) {
+      setShowSaveModal(true);
+      return;
+    }
+
+    const newBlocks = blocks.map(block => 
       block.id === id ? { ...block, ...updates } : block
-    ));
+    );
+    updateBlocks(newBlocks);
+
+    // Save to database
+    if (currentFormId) {
+      const { error } = await supabase
+        .from('forms')
+        .update({
+          blocks: newBlocks,
+        })
+        .eq('id', currentFormId);
+
+      if (!error) {
+        fetchSavedForms();
+      }
+    }
   };
 
-  const handleMoveBlock = (dragIndex: number, hoverIndex: number) => {
+  const handleMoveBlock = async (dragIndex: number, hoverIndex: number) => {
+    if (!user) {
+      setShowSaveModal(true);
+      return;
+    }
+
     const dragBlock = blocks[dragIndex];
     const newBlocks = [...blocks];
     newBlocks.splice(dragIndex, 1);
     newBlocks.splice(hoverIndex, 0, dragBlock);
     updateBlocks(newBlocks);
+
+    // Save to database
+    if (currentFormId) {
+      const { error } = await supabase
+        .from('forms')
+        .update({
+          blocks: newBlocks,
+        })
+        .eq('id', currentFormId);
+
+      if (!error) {
+        fetchSavedForms();
+      }
+    }
   };
 
   const openBlockSelector = (index: number) => {
@@ -104,37 +216,43 @@ const FormBuilder = () => {
     router.push('/preview');
   };
 
+  const handleCreateNew = async () => {
+    if (!user) {
+      setShowSaveModal(true);
+      return;
+    }
+
+    // Create a new empty form in the database
+    const { data, error } = await supabase.from('forms').insert({
+      user_id: user.id,
+      title: 'Untitled Form',
+      blocks: [],
+      created_at: new Date().toISOString(),
+    }).select().single();
+
+    if (!error && data) {
+      setCurrentFormId(data.id);
+      updateFormTitle(data.title);
+      updateBlocks(data.blocks);
+      fetchSavedForms();
+    }
+  };
+
+  const handleFormSelect = (form: any) => {
+    updateFormTitle(form.title);
+    updateBlocks(form.blocks);
+    setCurrentFormId(form.id);
+  };
+
   return (
     <div className="min-h-screen flex">
       {user && (
-        <div className="w-64 bg-gray-50 border-r border-gray-200 p-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Your Forms</h2>
-            <button
-              onClick={() => {
-                clearForm();
-                updateFormTitle('Untitled Form');
-              }}
-              className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Create New
-            </button>
-          </div>
-          <div className="space-y-2">
-            {savedForms.map((form) => (
-              <div
-                key={form.id}
-                className="p-2 hover:bg-gray-100 rounded cursor-pointer"
-                onClick={() => {
-                  updateFormTitle(form.title);
-                  updateBlocks(form.blocks);
-                }}
-              >
-                {form.title}
-              </div>
-            ))}
-          </div>
-        </div>
+        <FormSidebar
+          savedForms={savedForms}
+          currentFormId={currentFormId}
+          onFormSelect={handleFormSelect}
+          onCreateNew={handleCreateNew}
+        />
       )}
       <div className="flex-1 flex flex-col">
         <div className="flex items-center justify-between bg-white py-2 px-4 sticky top-0 z-50 border-b">
