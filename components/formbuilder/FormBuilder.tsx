@@ -213,7 +213,11 @@ const FormBuilder = () => {
   };
 
   const goToPreview = () => {
-    router.push('/preview');
+    if (currentFormId) {
+      router.push(`/preview?formId=${currentFormId}`);
+    } else {
+      router.push('/preview');
+    }
   };
 
   const handleCreateNew = async () => {
