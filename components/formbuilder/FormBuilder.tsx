@@ -252,7 +252,7 @@ const FormBuilder = () => {
         />
       )}
       <div className="flex-1 flex flex-col">
-        <div className="flex items-center justify-between bg-white py-2 px-4 sticky top-0 z-50 border-b">
+        <div className="flex items-center justify-between bg-white py-2 px-4 sticky top-0 z-50">
           <div className="flex items-center">
             <Link href="/" className="text-xl font-bold">
               EZForm
@@ -277,7 +277,7 @@ const FormBuilder = () => {
             
             <button
               onClick={handleSaveForm}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+              className="bg-black text-white px-4 py-2 rounded-md hover:bg-gray-700"
             >
               Save Form
             </button>
