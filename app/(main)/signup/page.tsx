@@ -16,7 +16,7 @@ export default function SignUpPage() {
     e.preventDefault()
     try {
       await signUp(email, password)
-      router.push('/builder')
+      router.push('/login')
     } catch (err) {
       setError('Error creating account')
     }

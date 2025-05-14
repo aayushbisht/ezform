@@ -27,10 +27,12 @@ const FormBuilder = () => {
   }, [user]);
 
   const fetchSavedForms = async () => {
+    if (!user) return;
+    
     const { data, error } = await supabase
       .from('forms')
       .select('*')
-      .eq('user_id', user?.id)
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
     if (data) {
@@ -39,6 +41,7 @@ const FormBuilder = () => {
   };
 
   const handleSaveForm = async () => {
+    // When trying to explicitly save, prompt for login if not logged in
     if (!user) {
       setShowSaveModal(true);
       return;
@@ -74,11 +77,6 @@ const FormBuilder = () => {
   };
 
   const handleAddBlock = async (type: BlockType, blockType: string) => {
-    if (!user) {
-      setShowSaveModal(true);
-      return;
-    }
-
     const newBlock: FormBlock = {
       id: `block-${Date.now()}`,
       type,
@@ -97,50 +95,50 @@ const FormBuilder = () => {
       newBlocks = [...blocks, newBlock];
     }
     
+    // Update local state (and localStorage via FormContext)
     updateBlocks(newBlocks);
     setShowBlockSelector(false);
     setInsertIndex(null);
 
-    // Save to database
-    if (currentFormId) {
-      // Update existing form
-      const { error } = await supabase
-        .from('forms')
-        .update({
+    // Only save to database if user is logged in
+    if (user) {
+      if (currentFormId) {
+        // Update existing form
+        const { error } = await supabase
+          .from('forms')
+          .update({
+            blocks: newBlocks,
+          })
+          .eq('id', currentFormId);
+
+        if (!error) {
+          fetchSavedForms();
+        }
+      } else {
+        // Create new form if it doesn't exist
+        const { data, error } = await supabase.from('forms').insert({
+          user_id: user.id,
+          title: formTitle,
           blocks: newBlocks,
-        })
-        .eq('id', currentFormId);
+          created_at: new Date().toISOString(),
+        }).select().single();
 
-      if (!error) {
-        fetchSavedForms();
-      }
-    } else {
-      // Create new form if it doesn't exist
-      const { data, error } = await supabase.from('forms').insert({
-        user_id: user.id,
-        title: formTitle,
-        blocks: newBlocks,
-        created_at: new Date().toISOString(),
-      }).select().single();
-
-      if (!error && data) {
-        setCurrentFormId(data.id);
-        fetchSavedForms();
+        if (!error && data) {
+          setCurrentFormId(data.id);
+          fetchSavedForms();
+        }
       }
     }
   };
 
   const handleDeleteBlock = async (id: string) => {
-    if (!user) {
-      setShowSaveModal(true);
-      return;
-    }
-
     const newBlocks = blocks.filter(block => block.id !== id);
+    
+    // Update local state (and localStorage via FormContext)
     updateBlocks(newBlocks);
 
-    // Save to database
-    if (currentFormId) {
+    // Only save to database if user is logged in
+    if (user && currentFormId) {
       const { error } = await supabase
         .from('forms')
         .update({
@@ -155,18 +153,15 @@ const FormBuilder = () => {
   };
 
   const handleUpdateBlock = async (id: string, updates: Partial<FormBlock>) => {
-    if (!user) {
-      setShowSaveModal(true);
-      return;
-    }
-
     const newBlocks = blocks.map(block => 
       block.id === id ? { ...block, ...updates } : block
     );
+    
+    // Update local state (and localStorage via FormContext)
     updateBlocks(newBlocks);
 
-    // Save to database
-    if (currentFormId) {
+    // Only save to database if user is logged in
+    if (user && currentFormId) {
       const { error } = await supabase
         .from('forms')
         .update({
@@ -181,19 +176,16 @@ const FormBuilder = () => {
   };
 
   const handleMoveBlock = async (dragIndex: number, hoverIndex: number) => {
-    if (!user) {
-      setShowSaveModal(true);
-      return;
-    }
-
     const dragBlock = blocks[dragIndex];
     const newBlocks = [...blocks];
     newBlocks.splice(dragIndex, 1);
     newBlocks.splice(hoverIndex, 0, dragBlock);
+    
+    // Update local state (and localStorage via FormContext)
     updateBlocks(newBlocks);
 
-    // Save to database
-    if (currentFormId) {
+    // Only save to database if user is logged in
+    if (user && currentFormId) {
       const { error } = await supabase
         .from('forms')
         .update({
@@ -221,6 +213,7 @@ const FormBuilder = () => {
   };
 
   const handleCreateNew = async () => {
+    // When trying to create a new saved form, prompt for login if not logged in
     if (!user) {
       setShowSaveModal(true);
       return;
@@ -334,7 +327,7 @@ const FormBuilder = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
             <h3 className="text-lg font-medium mb-4">Sign in to save your form</h3>
-            <p className="mb-4">You need to be signed in to save your form.</p>
+            <p className="mb-4">Your form is saved locally, but you need to be signed in to save it to your account.</p>
             <div className="flex justify-end space-x-4">
               <button
                 onClick={() => setShowSaveModal(false)}
